@@ -1,0 +1,8 @@
+auth0:
+  audience: https://reclaimium-2e023.appspot.com/items
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://reclaimium.eu.auth0.com/
