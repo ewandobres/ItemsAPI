@@ -14,13 +14,18 @@ public class FirebaseInit {
     public void initalize() {
         try{
 
-        //FileInputStream serviceAccount =
-        //        new FileInputStream("./src/main/resources/META-INF/serviceAccountKey.json");
+        FileInputStream serviceAccount =
+                new FileInputStream("./src/main/resources/META-INF/serviceAccountKey.json");
 
-        FirebaseOptions options = new FirebaseOptions.Builder()
+        /*FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.getApplicationDefault())
                 .setDatabaseUrl("https://reclaimium-2e023.firebaseio.com")
-                .build();
+                .build();*/
+
+            FirebaseOptions options = new FirebaseOptions.Builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setDatabaseUrl("https://reclaimium-2e023.firebaseio.com")
+                    .build();
 
         FirebaseApp.initializeApp(options);
         } catch (Exception e){

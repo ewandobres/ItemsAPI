@@ -1,27 +1,64 @@
 package com.reclaimium.itemsapi;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+
+@Component
 public class ShopItem {
-    String id;
+    @NotNull
+    String name;
+    @NotNull
     String itemQuantity;
+    @NotNull
     String newPrice;
-    public ShopItem(String id, String itemQuantity, String newPrice) {
-        this.id = id;
+    @NotNull
+    String oldPrice;
+    @NotNull
+    Date sellByDate;
+
+
+    public ShopItem(String name, String itemQuantity, String newPrice, String oldPrice, String sellByDate) {
+        this.name = name;
         this.itemQuantity = itemQuantity;
         this.newPrice = newPrice;
+        this.oldPrice = oldPrice;
+        this.sellByDate = new Date(Long.parseLong(sellByDate)*1000);
     }
+
+    public String getOldPrice() {
+        return oldPrice;
+    }
+
+    public void setOldPrice(String oldPrice) {
+        this.oldPrice = oldPrice;
+    }
+
+
+
 
     public ShopItem(){
 
     }
 
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setId(String name) {
+        this.name = name;
+    }
+    public Date getSellByDate() {
+        return sellByDate;
     }
 
+    public void setSellByDate(Date sellByDate) {
+        this.sellByDate = sellByDate;
+    }
     public String getItemQuantity() {
         return itemQuantity;
     }
@@ -37,7 +74,6 @@ public class ShopItem {
     public void setNewPrice(String newPrice) {
         this.newPrice = newPrice;
     }
-
 
 
 
