@@ -1,6 +1,7 @@
 package com.reclaimium.itemsapi;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -14,8 +15,12 @@ public class FirebaseInit {
     public void initalize() {
         try{
 
-        FileInputStream serviceAccount =
-                new FileInputStream("./src/main/resources/META-INF/serviceAccountKey.json");
+        /*FileInputStream serviceAccount =
+                new FileInputStream("./src/main/resources/META-INF/serviceAccountKey.json");*/
+
+            ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+            InputStream serviceAccount = classloader.getResourceAsStream("serviceAccountKey.json");
+
 
         /*FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.getApplicationDefault())
