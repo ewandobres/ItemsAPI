@@ -2,31 +2,64 @@ package com.reclaimium.itemsapi;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteResult;
+import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
+import com.okta.jwt.AccessTokenVerifier;
+import com.okta.jwt.Jwt;
+import com.okta.jwt.JwtVerificationException;
+import com.okta.jwt.JwtVerifiers;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Service
 public class FirebaseService {
 
-    public String saveItemDetails(ShopItem shopItem) throws ExecutionException, InterruptedException {
+    private String getShopId(String accessToken) throws JwtVerificationException, ExecutionException, InterruptedException {
+        AccessTokenVerifier jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
+                .setIssuer("https://dev-476180.okta.com/oauth2/ausajo9lsTeun8ZCb4x6")
+                .setAudience("api://itemsapi")                // defaults to 'api://default'
+                .setConnectionTimeout(Duration.ofSeconds(1)) // defaults to 1s
+                .setReadTimeout(Duration.ofSeconds(1))       // defaults to 1s
+                .build();
+
+        Jwt result = jwtVerifier.decode(accessToken);
+        String clientId = result.getClaims().get("cid").toString();
+
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        ApiFuture<DocumentReference> collectionsApiFuture = dbFirestore.collection("items").add(shopItem);
+        CollectionReference shops = dbFirestore.collection("Shops");
+        Query query = shops.whereEqualTo("clientId", clientId);
+
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+
+        if(querySnapshot.get().getDocuments().size() != 1){
+            return null;
+        }
+        String shopId = null;
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            shopId = document.getId();
+        }
+
+        if(shopId == null){
+            throw new Error("No shop contains correct client id");
+        }
+
+        return shopId ;
+    }
+
+    public String saveItemDetails(String shopId, ShopItem shopItem) throws ExecutionException, InterruptedException {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        ApiFuture<DocumentReference> collectionsApiFuture = dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").add(shopItem);
 
         return collectionsApiFuture.get().getId();
     }
 
-    public ShopItem getItemDetails(String id) throws ExecutionException, InterruptedException {
+    public ShopItem getItemDetails(String accessToken, String id) throws ExecutionException, InterruptedException, JwtVerificationException {
+
+        String shopId = getShopId(accessToken);
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("items").document(id);
+        DocumentReference documentReference = dbFirestore.collection("Shops").document(Objects.requireNonNull(shopId)).collection("ItemsOnSale").document(id);
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
         DocumentSnapshot document = future.get();
@@ -41,9 +74,9 @@ public class FirebaseService {
         }
     }
 
-    public String updateItemDetails(ShopItem shop, String id) throws ExecutionException, InterruptedException {
+    public String updateItemDetails(ShopItem shop, String shopId, String id) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("items").document(id);
+        DocumentReference documentReference = dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").document(id);
         ApiFuture<DocumentSnapshot> future = documentReference.get();
         DocumentSnapshot document = future.get();
 
@@ -57,7 +90,7 @@ public class FirebaseService {
         }
 
         if(document.exists()){
-            ApiFuture<WriteResult> collectionsApiFuture = dbFirestore.collection("items").document(id).update(shopMap);
+            ApiFuture<WriteResult> collectionsApiFuture = dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").document(id).update(shopMap);
             return collectionsApiFuture.get().getUpdateTime().toString();
         }else{
             return null;
@@ -65,9 +98,9 @@ public class FirebaseService {
     }
 
 
-    public String deleteItemDetails(String id){
+    public String deleteItemDetails(String shopId, String id){
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        dbFirestore.collection("items").document(id).delete();
+        dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").document(id).delete();
         return id;
     }
 
