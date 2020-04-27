@@ -48,9 +48,10 @@ public class FirebaseService {
         return shopId ;
     }
 
-    public String saveItemDetails(String shopId, ShopItem shopItem) throws ExecutionException, InterruptedException {
+    public String saveItemDetails(String accessToken, ShopItem shopItem) throws ExecutionException, InterruptedException, JwtVerificationException {
+        String shopId = getShopId(accessToken);
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        ApiFuture<DocumentReference> collectionsApiFuture = dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").add(shopItem);
+        ApiFuture<DocumentReference> collectionsApiFuture = dbFirestore.collection("Shops").document(Objects.requireNonNull(shopId)).collection("ItemsOnSale").add(shopItem);
 
         return collectionsApiFuture.get().getId();
     }
@@ -74,9 +75,10 @@ public class FirebaseService {
         }
     }
 
-    public String updateItemDetails(ShopItem shop, String shopId, String id) throws ExecutionException, InterruptedException {
+    public String updateItemDetails(ShopItem shop, String accessToken, String id) throws ExecutionException, InterruptedException, JwtVerificationException {
+        String shopId = getShopId(accessToken);
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").document(id);
+        DocumentReference documentReference = dbFirestore.collection("Shops").document(Objects.requireNonNull(shopId)).collection("ItemsOnSale").document(id);
         ApiFuture<DocumentSnapshot> future = documentReference.get();
         DocumentSnapshot document = future.get();
 
@@ -98,7 +100,8 @@ public class FirebaseService {
     }
 
 
-    public String deleteItemDetails(String shopId, String id){
+    public String deleteItemDetails(String accessToken, String id) throws InterruptedException, ExecutionException, JwtVerificationException {
+        String shopId = getShopId(accessToken);
         Firestore dbFirestore = FirestoreClient.getFirestore();
         dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").document(id).delete();
         return id;
