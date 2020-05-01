@@ -40,6 +40,7 @@ public class OktaVerification {
                 .body("grant_type=client_credentials&scope=customScope")
                 .asString();
 
+        //System.out.println("Basic "+ encoding);
         JSONObject extractedBody = new JSONObject(response.getBody());
 
         return extractedBody.get("access_token").toString();

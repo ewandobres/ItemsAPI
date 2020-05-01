@@ -103,8 +103,27 @@ public class FirebaseService {
     public String deleteItemDetails(String accessToken, String id) throws InterruptedException, ExecutionException, JwtVerificationException {
         String shopId = getShopId(accessToken);
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        dbFirestore.collection("Shops").document(shopId).collection("ItemsOnSale").document(id).delete();
+        dbFirestore.collection("Shops").document(Objects.requireNonNull(shopId)).collection("ItemsOnSale").document(id).delete();
         return id;
     }
 
+    public String verifyBarcode(String accessToken, String barcodeKey) throws ExecutionException, InterruptedException, JwtVerificationException {
+
+        String shopId = getShopId(accessToken);
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        ApiFuture<DocumentSnapshot> documentSnapshotApiFuture = dbFirestore.collection("Shops").document(Objects.requireNonNull(shopId)).collection("barcodeInfo").document(barcodeKey).get();
+        DocumentSnapshot documentSnapshot = documentSnapshotApiFuture.get();
+        // CAN GET TIME PURCHASE WENT THROUGH WITH documentSnapshot.get("timeCreated");
+        if (documentSnapshot.exists()) {
+            ApiFuture<QuerySnapshot> documents = documentSnapshot.getReference().collection("items").get();
+            List<QueryDocumentSnapshot> itemsRedeemed = documents.get().getDocuments();
+            Integer totalValueRedeemed = 0;
+            for (QueryDocumentSnapshot snapshot : itemsRedeemed) {
+                totalValueRedeemed += Integer.parseInt(Objects.requireNonNull(snapshot.get("itemQuantity")).toString()) * Integer.parseInt(Objects.requireNonNull(snapshot.get("newPrice")).toString());
+            }
+            return "Barcode Exists, Total Value: "+ totalValueRedeemed;
+        }else {
+            return "Barcode Does Not Exist, rescan or arrest customer for fraud";
+        }
+    }
 }

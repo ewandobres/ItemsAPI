@@ -104,4 +104,26 @@ public class ItemController {
         return null;
     }
 
+    @GetMapping("/verifybarcode")
+    public String verifyBarcode(
+            @RequestHeader(required = false) String accessToken,
+            @RequestHeader(required = false) String clientId,
+            @RequestHeader(required = false) String clientSecret,
+            @RequestHeader String barcodeKey)
+            throws JwtVerificationException, UnirestException, ExecutionException, InterruptedException {
+        if(accessToken != null){
+            String verifiedToken = oktaVerification.verifyCredentials(accessToken);
+
+            if(verifiedToken.equals(accessToken)){
+                return "Verification: "+ firebaseService.verifyBarcode(verifiedToken, barcodeKey);
+            }
+
+        }
+        if(clientId != null && clientSecret != null){
+            String verifiedToken = oktaVerification.verifyCredentials(clientId, clientSecret);
+            return firebaseService.verifyBarcode(verifiedToken, barcodeKey);
+        }
+        return null;
+    }
+
 }
